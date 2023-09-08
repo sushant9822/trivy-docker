@@ -1,0 +1,135 @@
+to create secrets
+kubectl create secret generic db-secret --from-literal=username=db_user --from-literal=db_pass=1234 -n database
+
+helm list -n grafana
+
+helm uninstall kube-prometheus-stack  -n grafana
+
+helm  upgrade --install kube-prometheus-stack --namespace grafana  --version 48.1.0  prometheus-community/kube-prometheus-stack
+
+service port forwarding ----
+
+kubectl port-forward svc/kube-prometheus-stack-grafana --address 0.0.0.0 8080:80 -n grafana
+
+kubectl port-forward svc/nginx-myapp --address 0.0.0.0 8080:80 -n dev
+
+##############to exec container##########
+
+kubectl exec -it kube-prometheus-stack-grafana-6d8fd5dd84-9vvz8 bash -n grafana
+
+
+
+#############set aliase#####
+
+alias k-kubectl
+
+########installation########
+
+helm  upgrade --install kube-prometheus-stack --namespace grafana  --version 48.1.0  prometheus-community/kube-prometheus-stack
+
+
+
+kubenates-secret 
+
+kubectl create secret docker-registry nexus1 --docker-server=nexus.tablaking.fun --docker-username=admin --docker-password=123456 --namespace dev
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-world
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-world   # Ensure this matches the "app" label in the template
+  template:
+    metadata:
+      labels:
+        app: hello-world   # Ensure this matches the "app" label in the selector
+    spec:
+      containers:
+      - name: hello-world
+        image: nexus.tablaking.fun/nginx:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: nexus1
+
+
+
+##########################certbot#################
+
+
+server {
+
+#	root /var/www/html;
+
+	# Add index.php to the list if you are using PHP
+#	index index.html index.htm index.nginx-debian.html;
+    server_name nexus.ranjeetrrv.tech; # managed by Certbot
+
+
+	#location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		#try_files $uri $uri/ =404;
+	#}
+   location /v2 {
+     proxy_set_header Host $host:$server_port;
+     proxy_set_header X-Real-IP $remote_addr;
+     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     proxy_set_header X-Forwarded-Proto "https";
+     proxy_pass http://localhost:8081/repository/phoenix-docker-hosted/$request_uri;
+  
+   }
+   location /v1 {
+     proxy_set_header Host $host:$server_port;
+     proxy_set_header X-Real-IP $remote_addr;
+     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     proxy_set_header X-Forwarded-Proto "https";
+     proxy_pass http://localhost:8081/repository/phoenix-docker-hosted/$request_uri;
+  }
+
+   # Regular Nexus requests
+   location / {
+     proxy_set_header Host $host:$server_port;
+     proxy_set_header X-Real-IP $remote_addr;
+     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+     proxy_set_header X-Forwarded-Proto "https";
+     proxy_pass http://localhost:8081;
+   }
+    listen [::]:443 ssl ipv6only=on; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/nexus.ranjeetrrv.tech/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/nexus.ranjeetrrv.tech/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+#server {
+#    if ($host = nexus.ranjeetrrv.tech) {
+#        return 301 https://$host$request_uri;
+#    } # managed by Certbot
+
+
+#	listen 80 ;
+#	listen [::]:80 ;
+#    server_name nexus.ranjeetrrv.tech;
+#    return 404; # managed by Certbot
+
+
+#}
+
+######################### nexus command ##############
+
+docker login https://nexus.ranjeetrrv.tech/repository/phoenix-docker-hosted/
+docker tag ravindrasingh6969/nodeapp nexus.ranjeetrrv.tech/nodeapp:v1
+docker push nexus.ranjeetrrv.tech/nodeapp:v1
+docker pull nexus.ranjeetrrv.tech/nodeapp:v1
+
+
+
